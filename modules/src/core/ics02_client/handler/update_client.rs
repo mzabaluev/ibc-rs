@@ -27,6 +27,7 @@ pub struct Result {
 }
 
 pub fn process(
+    now: Timestamp,
     ctx: &dyn ClientReader,
     msg: MsgUpdateAnyClient,
 ) -> HandlerResult<ClientResult, Error> {
@@ -59,7 +60,7 @@ pub fn process(
 
     debug!("latest consensus state: {:?}", latest_consensus_state);
 
-    let duration = Timestamp::now()
+    let duration = now
         .duration_since(&latest_consensus_state.timestamp())
         .ok_or_else(|| {
             Error::invalid_consensus_state_timestamp(
@@ -139,7 +140,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(&ctx, ClientMsg::UpdateClient(msg.clone()));
+        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
 
         match output {
             Ok(HandlerOutput {
@@ -186,7 +187,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(&ctx, ClientMsg::UpdateClient(msg.clone()));
+        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
 
         match output {
             Err(Error(ErrorDetail::ClientNotFound(e), _)) => {
@@ -222,7 +223,7 @@ mod tests {
                 signer: signer.clone(),
             };
 
-            let output = dispatch(&ctx, ClientMsg::UpdateClient(msg.clone()));
+            let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
 
             match output {
                 Ok(HandlerOutput {
@@ -289,7 +290,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(&ctx, ClientMsg::UpdateClient(msg.clone()));
+        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
 
         match output {
             Ok(HandlerOutput {
@@ -366,7 +367,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(&ctx, ClientMsg::UpdateClient(msg.clone()));
+        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
 
         match output {
             Ok(HandlerOutput {
@@ -446,7 +447,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(&ctx, ClientMsg::UpdateClient(msg.clone()));
+        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
 
         match output {
             Ok(HandlerOutput {
@@ -520,7 +521,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(&ctx, ClientMsg::UpdateClient(msg));
+        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg));
 
         match output {
             Ok(_) => {

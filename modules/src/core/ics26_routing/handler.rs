@@ -12,12 +12,17 @@ use crate::core::ics26_routing::error::Error;
 use crate::core::ics26_routing::msgs::Ics26Envelope::{
     self, Ics20Msg, Ics2Msg, Ics3Msg, Ics4ChannelMsg, Ics4PacketMsg,
 };
+use crate::timestamp::Timestamp;
 use crate::{events::IbcEvent, handler::HandlerOutput};
 
 /// Mimics the DeliverTx ABCI interface, but a slightly lower level. No need for authentication
 /// info or signature checks here.
 /// Returns a vector of all events that got generated as a byproduct of processing `messages`.
-pub fn deliver<Ctx>(ctx: &mut Ctx, messages: Vec<Any>) -> Result<Vec<IbcEvent>, Error>
+pub fn deliver<Ctx>(
+    now: Timestamp,
+    ctx: &mut Ctx,
+    messages: Vec<Any>,
+) -> Result<Vec<IbcEvent>, Error>
 where
     Ctx: Ics26Context,
 {
@@ -32,7 +37,7 @@ where
         let envelope = decode(any_msg)?;
 
         // Process the envelope, and accumulate any events that were generated.
-        let mut output = dispatch(&mut ctx_interim, envelope)?;
+        let mut output = dispatch(now, &mut ctx_interim, envelope)?;
         // TODO: output.log and output.result are discarded
         res.append(&mut output.events);
     }
@@ -50,13 +55,17 @@ pub fn decode(message: Any) -> Result<Ics26Envelope, Error> {
 /// Top-level ICS dispatch function. Routes incoming IBC messages to their corresponding module.
 /// Returns a handler output with empty result of type `HandlerOutput<()>` which contains the log
 /// and events produced after processing the input `msg`.
-pub fn dispatch<Ctx>(ctx: &mut Ctx, msg: Ics26Envelope) -> Result<HandlerOutput<()>, Error>
+pub fn dispatch<Ctx>(
+    now: Timestamp,
+    ctx: &mut Ctx,
+    msg: Ics26Envelope,
+) -> Result<HandlerOutput<()>, Error>
 where
     Ctx: Ics26Context,
 {
     let output = match msg {
         Ics2Msg(msg) => {
-            let handler_output = ics2_msg_dispatcher(ctx, msg).map_err(Error::ics02_client)?;
+            let handler_output = ics2_msg_dispatcher(now, ctx, msg).map_err(Error::ics02_client)?;
             // Apply the result to the context (host chain store).
             ctx.store_client_result(handler_output.result)
                 .map_err(Error::ics02_client)?;
@@ -268,6 +277,7 @@ mod tests {
 
         // First, create a client..
         let res = dispatch(
+            Timestamp::now(),
             &mut ctx,
             Ics26Envelope::Ics2Msg(ClientMsg::CreateClient(create_client_msg.clone())),
         );
@@ -468,7 +478,7 @@ mod tests {
         .collect();
 
         for test in tests {
-            let res = dispatch(&mut ctx, test.msg.clone());
+            let res = dispatch(Timestamp::now(), &mut ctx, test.msg.clone());
 
             assert_eq!(
                 test.want_pass,

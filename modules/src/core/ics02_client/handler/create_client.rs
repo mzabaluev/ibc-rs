@@ -27,6 +27,7 @@ pub struct Result {
 }
 
 pub fn process(
+    now: Timestamp,
     ctx: &dyn ClientReader,
     msg: MsgCreateAnyClient,
 ) -> HandlerResult<ClientResult, Error> {
@@ -48,7 +49,7 @@ pub fn process(
         client_type: msg.client_state().client_type(),
         client_state: msg.client_state(),
         consensus_state: msg.consensus_state(),
-        processed_time: Timestamp::now(),
+        processed_time: now,
         processed_height: ctx.host_height(),
     });
 
@@ -87,6 +88,7 @@ mod tests {
     use crate::mock::context::MockContext;
     use crate::mock::header::MockHeader;
     use crate::test_utils::get_dummy_account_id;
+    use crate::timestamp::Timestamp;
     use crate::Height;
 
     #[test]
@@ -102,7 +104,7 @@ mod tests {
         )
         .unwrap();
 
-        let output = dispatch(&ctx, ClientMsg::CreateClient(msg.clone()));
+        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::CreateClient(msg.clone()));
 
         match output {
             Ok(HandlerOutput {
@@ -193,7 +195,7 @@ mod tests {
         let expected_client_id = ClientId::new(ClientType::Mock, 0).unwrap();
 
         for msg in create_client_msgs {
-            let output = dispatch(&ctx, ClientMsg::CreateClient(msg.clone()));
+            let output = dispatch(Timestamp::now(), &ctx, ClientMsg::CreateClient(msg.clone()));
 
             match output {
                 Ok(HandlerOutput {
@@ -255,7 +257,7 @@ mod tests {
         )
         .unwrap();
 
-        let output = dispatch(&ctx, ClientMsg::CreateClient(msg.clone()));
+        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::CreateClient(msg.clone()));
 
         match output {
             Ok(HandlerOutput {

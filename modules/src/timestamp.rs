@@ -74,6 +74,7 @@ impl Timestamp {
     }
 
     /// Returns a `Timestamp` representation of the current time.
+    #[cfg(any(feature = "clock", feature = "mocks", test))]
     pub fn now() -> Timestamp {
         let ts = OffsetDateTime::now_utc().try_into().unwrap();
         Timestamp { time: Some(ts) }
