@@ -67,6 +67,7 @@ mod tests {
     use crate::prelude::*;
 
     use core::time::Duration;
+    use tendermint::Time;
     use test_log::test;
 
     use crate::clients::ics07_tendermint::client_state::{
@@ -88,7 +89,7 @@ mod tests {
     use crate::mock::context::MockContext;
     use crate::mock::header::MockHeader;
     use crate::test_utils::get_dummy_account_id;
-    use crate::timestamp::Timestamp;
+    use crate::timestamp::Clock;
     use crate::Height;
 
     #[test]
@@ -104,7 +105,7 @@ mod tests {
         )
         .unwrap();
 
-        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::CreateClient(msg.clone()));
+        let output = dispatch(Time::now(), &ctx, ClientMsg::CreateClient(msg.clone()));
 
         match output {
             Ok(HandlerOutput {
@@ -195,7 +196,7 @@ mod tests {
         let expected_client_id = ClientId::new(ClientType::Mock, 0).unwrap();
 
         for msg in create_client_msgs {
-            let output = dispatch(Timestamp::now(), &ctx, ClientMsg::CreateClient(msg.clone()));
+            let output = dispatch(Time::now(), &ctx, ClientMsg::CreateClient(msg.clone()));
 
             match output {
                 Ok(HandlerOutput {
@@ -257,7 +258,7 @@ mod tests {
         )
         .unwrap();
 
-        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::CreateClient(msg.clone()));
+        let output = dispatch(Time::now(), &ctx, ClientMsg::CreateClient(msg.clone()));
 
         match output {
             Ok(HandlerOutput {

@@ -1,5 +1,6 @@
 //! Protocol logic specific to processing ICS2 messages of type `MsgUpdateAnyClient`.
 
+use tendermint::Time;
 use tracing::debug;
 
 use crate::core::ics02_client::client_consensus::AnyConsensusState;
@@ -27,7 +28,7 @@ pub struct Result {
 }
 
 pub fn process(
-    now: Timestamp,
+    now: Time,
     ctx: &dyn ClientReader,
     msg: MsgUpdateAnyClient,
 ) -> HandlerResult<ClientResult, Error> {
@@ -60,7 +61,7 @@ pub fn process(
 
     debug!("latest consensus state: {:?}", latest_consensus_state);
 
-    let duration = now
+    let duration = Timestamp::from(now)
         .duration_since(&latest_consensus_state.timestamp())
         .ok_or_else(|| {
             Error::invalid_consensus_state_timestamp(
@@ -80,7 +81,7 @@ pub fn process(
     // This function will return the new client_state (its latest_height changed) and a
     // consensus_state obtained from header. These will be later persisted by the keeper.
     let (new_client_state, new_consensus_state) = client_def
-        .check_header_and_update_state(ctx, client_id.clone(), client_state, header)
+        .check_header_and_update_state(now, ctx, client_id.clone(), client_state, header)
         .map_err(|e| Error::header_verification_failure(e.to_string()))?;
 
     let result = ClientResult::Update(Result {
@@ -101,6 +102,7 @@ pub fn process(
 #[cfg(test)]
 mod tests {
     use core::str::FromStr;
+    use tendermint::Time;
     use test_log::test;
 
     use crate::core::ics02_client::client_consensus::AnyConsensusState;
@@ -121,7 +123,7 @@ mod tests {
     use crate::mock::host::HostType;
     use crate::prelude::*;
     use crate::test_utils::get_dummy_account_id;
-    use crate::timestamp::Timestamp;
+    use crate::timestamp::Clock;
     use crate::Height;
 
     #[test]
@@ -129,18 +131,18 @@ mod tests {
         let client_id = ClientId::default();
         let signer = get_dummy_account_id();
 
-        let timestamp = Timestamp::now();
+        let timestamp = Time::now();
 
         let ctx = MockContext::default().with_client(&client_id, Height::new(0, 42));
         let msg = MsgUpdateAnyClient {
             client_id: client_id.clone(),
             header: MockHeader::new(Height::new(0, 46))
-                .with_timestamp(timestamp)
+                .with_timestamp(timestamp.into())
                 .into(),
             signer,
         };
 
-        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
+        let output = dispatch(Time::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
 
         match output {
             Ok(HandlerOutput {
@@ -161,7 +163,8 @@ mod tests {
                         assert_eq!(
                             upd_res.client_state,
                             AnyClientState::Mock(MockClientState::new(
-                                MockHeader::new(msg.header.height()).with_timestamp(timestamp)
+                                MockHeader::new(msg.header.height())
+                                    .with_timestamp(timestamp.into())
                             ))
                         )
                     }
@@ -187,7 +190,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
+        let output = dispatch(Time::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
 
         match output {
             Err(Error(ErrorDetail::ClientNotFound(e), _)) => {
@@ -223,7 +226,7 @@ mod tests {
                 signer: signer.clone(),
             };
 
-            let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
+            let output = dispatch(Time::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
 
             match output {
                 Ok(HandlerOutput {
@@ -290,7 +293,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
+        let output = dispatch(Time::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
 
         match output {
             Ok(HandlerOutput {
@@ -367,7 +370,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
+        let output = dispatch(Time::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
 
         match output {
             Ok(HandlerOutput {
@@ -447,7 +450,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
+        let output = dispatch(Time::now(), &ctx, ClientMsg::UpdateClient(msg.clone()));
 
         match output {
             Ok(HandlerOutput {
@@ -521,7 +524,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(Timestamp::now(), &ctx, ClientMsg::UpdateClient(msg));
+        let output = dispatch(Time::now(), &ctx, ClientMsg::UpdateClient(msg));
 
         match output {
             Ok(_) => {

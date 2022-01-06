@@ -1,6 +1,7 @@
 use crate::prelude::*;
 
 use prost_types::Any;
+use tendermint::Time;
 
 use crate::applications::ics20_fungible_token_transfer::relay_application_logic::send_transfer::send_transfer as ics20_msg_dispatcher;
 use crate::core::ics02_client::handler::dispatch as ics2_msg_dispatcher;
@@ -12,17 +13,12 @@ use crate::core::ics26_routing::error::Error;
 use crate::core::ics26_routing::msgs::Ics26Envelope::{
     self, Ics20Msg, Ics2Msg, Ics3Msg, Ics4ChannelMsg, Ics4PacketMsg,
 };
-use crate::timestamp::Timestamp;
 use crate::{events::IbcEvent, handler::HandlerOutput};
 
 /// Mimics the DeliverTx ABCI interface, but a slightly lower level. No need for authentication
 /// info or signature checks here.
 /// Returns a vector of all events that got generated as a byproduct of processing `messages`.
-pub fn deliver<Ctx>(
-    now: Timestamp,
-    ctx: &mut Ctx,
-    messages: Vec<Any>,
-) -> Result<Vec<IbcEvent>, Error>
+pub fn deliver<Ctx>(now: Time, ctx: &mut Ctx, messages: Vec<Any>) -> Result<Vec<IbcEvent>, Error>
 where
     Ctx: Ics26Context,
 {
@@ -56,7 +52,7 @@ pub fn decode(message: Any) -> Result<Ics26Envelope, Error> {
 /// Returns a handler output with empty result of type `HandlerOutput<()>` which contains the log
 /// and events produced after processing the input `msg`.
 pub fn dispatch<Ctx>(
-    now: Timestamp,
+    now: Time,
     ctx: &mut Ctx,
     msg: Ics26Envelope,
 ) -> Result<HandlerOutput<()>, Error>
@@ -138,6 +134,7 @@ where
 mod tests {
     use crate::prelude::*;
 
+    use tendermint::Time;
     use test_log::test;
 
     use crate::core::ics02_client::client_consensus::AnyConsensusState;
@@ -178,7 +175,7 @@ mod tests {
     use crate::mock::context::MockContext;
     use crate::mock::header::MockHeader;
     use crate::test_utils::get_dummy_account_id;
-    use crate::timestamp::Timestamp;
+    use crate::timestamp::{Clock, Timestamp};
     use crate::Height;
 
     #[test]
@@ -277,7 +274,7 @@ mod tests {
 
         // First, create a client..
         let res = dispatch(
-            Timestamp::now(),
+            Time::now(),
             &mut ctx,
             Ics26Envelope::Ics2Msg(ClientMsg::CreateClient(create_client_msg.clone())),
         );
@@ -478,7 +475,7 @@ mod tests {
         .collect();
 
         for test in tests {
-            let res = dispatch(Timestamp::now(), &mut ctx, test.msg.clone());
+            let res = dispatch(Time::now(), &mut ctx, test.msg.clone());
 
             assert_eq!(
                 test.want_pass,

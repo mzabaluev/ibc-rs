@@ -130,8 +130,8 @@ mod tests {
     use crate::events::IbcEvent;
     use crate::mock::context::MockContext;
     use crate::prelude::*;
-    use crate::timestamp::Timestamp;
     use crate::timestamp::ZERO_DURATION;
+    use crate::timestamp::{Clock, Timestamp};
 
     #[test]
     fn send_packet_processing() {

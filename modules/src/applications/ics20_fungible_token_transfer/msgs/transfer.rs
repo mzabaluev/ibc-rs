@@ -105,7 +105,7 @@ pub mod test_util {
     use crate::{
         core::ics24_host::identifier::{ChannelId, PortId},
         test_utils::get_dummy_account_id,
-        timestamp::Timestamp,
+        timestamp::{Clock, Timestamp},
         Height,
     };
 

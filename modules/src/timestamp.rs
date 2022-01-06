@@ -50,6 +50,12 @@ pub enum Expiry {
     InvalidTimestamp,
 }
 
+#[cfg(feature = "clock")]
+pub trait Clock {
+    /// Returns a `Timestamp` representation of the current time.
+    fn now() -> Self;
+}
+
 impl Timestamp {
     /// The IBC protocol represents timestamps as u64 Unix
     /// timestamps in nanoseconds.
@@ -71,13 +77,6 @@ impl Timestamp {
                 .unwrap();
             Ok(Timestamp { time: Some(ts) })
         }
-    }
-
-    /// Returns a `Timestamp` representation of the current time.
-    #[cfg(any(feature = "clock", feature = "mocks", test))]
-    pub fn now() -> Timestamp {
-        let ts = OffsetDateTime::now_utc().try_into().unwrap();
-        Timestamp { time: Some(ts) }
     }
 
     /// Returns a `Timestamp` representation of a timestamp not being set.
@@ -158,6 +157,20 @@ impl Timestamp {
             (Some(time1), Some(time2)) => time1 > time2,
             _ => false,
         }
+    }
+}
+
+#[cfg(feature = "clock")]
+impl Clock for Time {
+    fn now() -> Time {
+        OffsetDateTime::now_utc().try_into().unwrap()
+    }
+}
+
+#[cfg(feature = "clock")]
+impl Clock for Timestamp {
+    fn now() -> Timestamp {
+        Time::now().into()
     }
 }
 
@@ -245,7 +258,7 @@ mod tests {
     use std::thread::sleep;
     use test_log::test;
 
-    use super::{Expiry, Timestamp, ZERO_DURATION};
+    use super::{Clock, Expiry, Timestamp, ZERO_DURATION};
 
     #[test]
     fn test_timestamp_comparisons() {

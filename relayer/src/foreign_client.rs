@@ -25,7 +25,7 @@ use ibc::core::ics24_host::identifier::{ChainId, ClientId};
 use ibc::downcast;
 use ibc::events::{IbcEvent, WithBlockDataType};
 use ibc::query::QueryTxRequest;
-use ibc::timestamp::{Timestamp, TimestampOverflowError};
+use ibc::timestamp::{Clock, Timestamp, TimestampOverflowError};
 use ibc::tx_msg::Msg;
 use ibc::Height;
 use ibc_proto::ibc::core::client::v1::QueryConsensusStatesRequest;

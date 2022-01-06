@@ -908,7 +908,7 @@ impl core::fmt::Display for TimeoutOnClosePacket {
 mod tests {
     use super::*;
     use crate::core::ics04_channel::packet::Sequence;
-    use crate::timestamp::Timestamp;
+    use crate::timestamp::{Clock, Timestamp};
 
     #[test]
     fn channel_event_to_abci_event() {

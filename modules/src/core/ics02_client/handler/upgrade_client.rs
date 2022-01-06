@@ -78,6 +78,7 @@ mod tests {
     use crate::prelude::*;
 
     use core::str::FromStr;
+    use tendermint::Time;
 
     use crate::core::ics02_client::error::{Error, ErrorDetail};
     use crate::core::ics02_client::handler::dispatch;
@@ -92,7 +93,7 @@ mod tests {
     use crate::mock::context::MockContext;
     use crate::mock::header::MockHeader;
     use crate::test_utils::get_dummy_account_id;
-    use crate::timestamp::Timestamp;
+    use crate::timestamp::Clock;
     use crate::Height;
     use ibc_proto::ibc::core::commitment::v1::MerkleProof;
 
@@ -118,11 +119,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(
-            Timestamp::now(),
-            &ctx,
-            ClientMsg::UpgradeClient(msg.clone()),
-        );
+        let output = dispatch(Time::now(), &ctx, ClientMsg::UpgradeClient(msg.clone()));
 
         match output {
             Ok(HandlerOutput {
@@ -173,11 +170,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(
-            Timestamp::now(),
-            &ctx,
-            ClientMsg::UpgradeClient(msg.clone()),
-        );
+        let output = dispatch(Time::now(), &ctx, ClientMsg::UpgradeClient(msg.clone()));
 
         match output {
             Err(Error(ErrorDetail::ClientNotFound(e), _)) => {
@@ -211,11 +204,7 @@ mod tests {
             signer,
         };
 
-        let output = dispatch(
-            Timestamp::now(),
-            &ctx,
-            ClientMsg::UpgradeClient(msg.clone()),
-        );
+        let output = dispatch(Time::now(), &ctx, ClientMsg::UpgradeClient(msg.clone()));
 
         match output {
             Err(Error(ErrorDetail::LowUpgradeHeight(e), _)) => {

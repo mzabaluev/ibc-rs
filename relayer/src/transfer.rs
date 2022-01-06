@@ -6,7 +6,7 @@ use flex_error::{define_error, DetailOnly};
 use ibc::applications::ics20_fungible_token_transfer::msgs::transfer::MsgTransfer;
 use ibc::core::ics24_host::identifier::{ChainId, ChannelId, PortId};
 use ibc::events::IbcEvent;
-use ibc::timestamp::{Timestamp, TimestampOverflowError};
+use ibc::timestamp::{Clock, Timestamp, TimestampOverflowError};
 use ibc::tx_msg::Msg;
 use ibc::Height;
 use uint::FromStrRadixErr;
