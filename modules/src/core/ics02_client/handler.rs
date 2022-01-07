@@ -28,7 +28,7 @@ where
     Ctx: ClientReader,
 {
     match msg {
-        ClientMsg::CreateClient(msg) => create_client::process(now.into(), ctx, msg),
+        ClientMsg::CreateClient(msg) => create_client::process(now, ctx, msg),
         ClientMsg::UpdateClient(msg) => update_client::process(now, ctx, msg),
         ClientMsg::UpgradeClient(msg) => upgrade_client::process(ctx, msg),
         _ => {

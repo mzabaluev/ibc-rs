@@ -58,7 +58,10 @@ mod tests {
     use crate::prelude::*;
     use crate::relayer::ics18_relayer::context::Ics18Context;
     use crate::relayer::ics18_relayer::utils::build_client_update_datagram;
+    use crate::timestamp::Clock;
     use crate::Height;
+
+    use tendermint::Time;
     use test_log::test;
     use tracing::debug;
 
@@ -128,7 +131,7 @@ mod tests {
 
             // - send the message to B. We bypass ICS18 interface and call directly into
             // MockContext `recv` method (to avoid additional serialization steps).
-            let dispatch_res_b = ctx_b.deliver(Ics26Envelope::Ics2Msg(client_msg_b));
+            let dispatch_res_b = ctx_b.deliver(Time::now(), Ics26Envelope::Ics2Msg(client_msg_b));
             let validation_res = ctx_b.validate();
             assert!(
                 validation_res.is_ok(),
@@ -185,7 +188,7 @@ mod tests {
             debug!("client_msg_a = {:?}", client_msg_a);
 
             // - send the message to A
-            let dispatch_res_a = ctx_a.deliver(Ics26Envelope::Ics2Msg(client_msg_a));
+            let dispatch_res_a = ctx_a.deliver(Time::now(), Ics26Envelope::Ics2Msg(client_msg_a));
             let validation_res = ctx_a.validate();
             assert!(
                 validation_res.is_ok(),

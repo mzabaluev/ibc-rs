@@ -36,9 +36,11 @@ use ibc::proofs::{ConsensusProof, Proofs};
 use ibc::relayer::ics18_relayer::context::Ics18Context;
 use ibc::relayer::ics18_relayer::error as relayer_error;
 use ibc::signer::Signer;
+use ibc::timestamp::Clock;
 use ibc::timestamp::ZERO_DURATION;
 use ibc::Height;
 use ibc_proto::ibc::core::commitment::v1::MerkleProof;
+use tendermint::Time;
 
 use step::{Action, ActionOutcome, Chain, Step};
 
@@ -295,7 +297,7 @@ impl IbcTestRunner {
         })
     }
 
-    pub fn apply(&mut self, action: Action) -> Result<(), relayer_error::Error> {
+    pub fn apply(&mut self, now: Time, action: Action) -> Result<(), relayer_error::Error> {
         match action {
             Action::None => panic!("unexpected action type"),
             Action::Ics02CreateClient {
@@ -312,7 +314,7 @@ impl IbcTestRunner {
                     consensus_state: Self::consensus_state(consensus_state),
                     signer: Self::signer(),
                 }));
-                ctx.deliver(msg)
+                ctx.deliver(now, msg)
             }
             Action::Ics02UpdateClient {
                 chain_id,
@@ -328,7 +330,7 @@ impl IbcTestRunner {
                     header: Self::header(header),
                     signer: Self::signer(),
                 }));
-                ctx.deliver(msg)
+                ctx.deliver(now, msg)
             }
             Action::Ics07UpgradeClient {
                 chain_id,
@@ -353,7 +355,7 @@ impl IbcTestRunner {
                     proof_upgrade_consensus_state: MerkleProof::try_from(cs_bytes).unwrap(),
                     signer: Self::signer(),
                 }));
-                ctx.deliver(msg)
+                ctx.deliver(now, msg)
             }
             Action::Ics03ConnectionOpenInit {
                 chain_id,
@@ -374,7 +376,7 @@ impl IbcTestRunner {
                         signer: Self::signer(),
                     },
                 ));
-                ctx.deliver(msg)
+                ctx.deliver(now, msg)
             }
             Action::Ics03ConnectionOpenTry {
                 chain_id,
@@ -405,7 +407,7 @@ impl IbcTestRunner {
                         signer: Self::signer(),
                     },
                 )));
-                ctx.deliver(msg)
+                ctx.deliver(now, msg)
             }
             Action::Ics03ConnectionOpenAck {
                 chain_id,
@@ -429,7 +431,7 @@ impl IbcTestRunner {
                         signer: Self::signer(),
                     },
                 )));
-                ctx.deliver(msg)
+                ctx.deliver(now, msg)
             }
             Action::Ics03ConnectionOpenConfirm {
                 chain_id,
@@ -449,7 +451,7 @@ impl IbcTestRunner {
                         signer: Self::signer(),
                     },
                 ));
-                ctx.deliver(msg)
+                ctx.deliver(now, msg)
             }
         }
     }
@@ -472,7 +474,7 @@ impl modelator::step_runner::StepRunner<Step> for IbcTestRunner {
 
     fn next_step(&mut self, step: Step) -> Result<(), String> {
         let show = step.action.clone();
-        let result = self.apply(step.action);
+        let result = self.apply(Time::now(), step.action);
         let outcome_matches = match step.action_outcome {
             ActionOutcome::None => panic!("unexpected action outcome"),
             ActionOutcome::Ics02CreateOk => result.is_ok(),

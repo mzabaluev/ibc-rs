@@ -41,7 +41,7 @@ use crate::mock::host::{HostBlock, HostType};
 use crate::relayer::ics18_relayer::context::Ics18Context;
 use crate::relayer::ics18_relayer::error::Error as Ics18Error;
 use crate::signer::Signer;
-use crate::timestamp::{Clock, Timestamp};
+use crate::timestamp::Timestamp;
 use crate::Height;
 
 /// A context implementing the dependencies necessary for testing any IBC module.
@@ -463,8 +463,8 @@ impl MockContext {
     /// A datagram passes from the relayer to the IBC module (on host chain).
     /// Alternative method to `Ics18Context::send` that does not exercise any serialization.
     /// Used in testing the Ics18 algorithms, hence this may return a Ics18Error.
-    pub fn deliver(&mut self, msg: Ics26Envelope) -> Result<(), Ics18Error> {
-        dispatch(Time::now(), self, msg).map_err(Ics18Error::transaction_failed)?;
+    pub fn deliver(&mut self, now: Time, msg: Ics26Envelope) -> Result<(), Ics18Error> {
+        dispatch(now, self, msg).map_err(Ics18Error::transaction_failed)?;
         // Create a new block.
         self.advance_host_chain_height();
         Ok(())
@@ -1082,9 +1082,9 @@ impl Ics18Context for MockContext {
         block_ref.cloned().map(Into::into)
     }
 
-    fn send(&mut self, msgs: Vec<Any>) -> Result<Vec<IbcEvent>, Ics18Error> {
+    fn send(&mut self, now: Time, msgs: Vec<Any>) -> Result<Vec<IbcEvent>, Ics18Error> {
         // Forward call to Ics26 delivery method.
-        let events = deliver(Time::now(), self, msgs).map_err(Ics18Error::transaction_failed)?;
+        let events = deliver(now, self, msgs).map_err(Ics18Error::transaction_failed)?;
 
         self.advance_host_chain_height(); // Advance chain height
         Ok(events)

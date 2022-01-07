@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use prost_types::Any;
+use tendermint::Time;
 
 use crate::core::ics02_client::client_state::AnyClientState;
 use crate::core::ics02_client::header::AnyHeader;
@@ -9,6 +10,7 @@ use crate::core::ics24_host::identifier::ClientId;
 use crate::relayer::ics18_relayer::error::Error;
 use crate::signer::Signer;
 use crate::Height;
+
 /// Trait capturing all dependencies (i.e., the context) which algorithms in ICS18 require to
 /// relay packets between chains. This trait comprises the dependencies towards a single chain.
 /// Most of the functions in this represent wrappers over the ABCI interface.
@@ -27,7 +29,7 @@ pub trait Ics18Context {
 
     /// Interface that the relayer uses to submit a datagram to this chain.
     /// One can think of this as wrapping around the `/broadcast_tx_commit` ABCI endpoint.
-    fn send(&mut self, msgs: Vec<Any>) -> Result<Vec<IbcEvent>, Error>;
+    fn send(&mut self, now: Time, msgs: Vec<Any>) -> Result<Vec<IbcEvent>, Error>;
 
     /// Temporary solution. Similar to `CosmosSDKChain::key_and_signer()` but simpler.
     fn signer(&self) -> Signer;

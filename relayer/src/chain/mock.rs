@@ -4,6 +4,7 @@ use core::time::Duration;
 
 use crossbeam_channel as channel;
 use prost_types::Any;
+use tendermint::Time;
 use tendermint_testgen::light_block::TmLightBlock;
 use tokio::runtime::Runtime;
 
@@ -29,6 +30,7 @@ use ibc::query::{QueryBlockRequest, QueryTxRequest};
 use ibc::relayer::ics18_relayer::context::Ics18Context;
 use ibc::signer::Signer;
 use ibc::test_utils::get_dummy_account_id;
+use ibc::timestamp::Clock;
 use ibc::Height;
 use ibc_proto::ibc::core::channel::v1::{
     PacketState, QueryChannelClientStateRequest, QueryChannelsRequest,
@@ -132,7 +134,10 @@ impl ChainEndpoint for MockChain {
         proto_msgs: Vec<Any>,
     ) -> Result<Vec<IbcEvent>, Error> {
         // Use the ICS18Context interface to submit the set of messages.
-        let events = self.context.send(proto_msgs).map_err(Error::ics18)?;
+        let events = self
+            .context
+            .send(Time::now(), proto_msgs)
+            .map_err(Error::ics18)?;
 
         Ok(events)
     }
